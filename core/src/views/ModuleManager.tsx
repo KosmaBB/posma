@@ -1,4 +1,5 @@
 import type { AppState } from '../state/appState'
+import { useEffect, useRef } from 'react'
 import { applyOrder, folders, modulesForOs, riskLabel } from '../data/modules'
 import { Icon } from '../components/Icons'
 
@@ -12,11 +13,51 @@ export function ModuleManager({ app }: { app: AppState }) {
   const os = onboarding?.os ?? 'linux'
   const available = modulesForOs(os)
 
+  /**
+   * Spotlight position for the card under the pointer.
+   *
+   * Both halves of this used to happen on every mousemove: reading the
+   * card's box forces the browser to settle layout right then, and writing
+   * the two custom properties repaints a gradient across the whole card.
+   * At the rate a pointer reports, that was over a hundred forced layouts a
+   * second. The read is cached per card and the write waits for a frame, so
+   * at most one repaint happens per frame no matter how fast the mouse moves.
+   */
+  const pending = useRef<{ el: HTMLElement; x: number; y: number } | null>(null)
+  const frame = useRef(0)
+  const boxes = useRef(new WeakMap<HTMLElement, DOMRect>())
+
   function onCardMouseMove(e: React.MouseEvent<HTMLElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    e.currentTarget.style.setProperty('--mx', `${((e.clientX - rect.left) / rect.width) * 100}%`)
-    e.currentTarget.style.setProperty('--my', `${((e.clientY - rect.top) / rect.height) * 100}%`)
+    const el = e.currentTarget
+    let rect = boxes.current.get(el)
+    if (!rect) {
+      rect = el.getBoundingClientRect()
+      boxes.current.set(el, rect)
+    }
+    pending.current = {
+      el,
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    }
+    if (frame.current) return
+    frame.current = requestAnimationFrame(() => {
+      frame.current = 0
+      const p = pending.current
+      if (!p) return
+      p.el.style.setProperty('--mx', `${p.x}%`)
+      p.el.style.setProperty('--my', `${p.y}%`)
+    })
   }
+
+  // A cached box is wrong once anything moves; the window changing size is
+  // the case that actually happens here.
+  useEffect(() => {
+    const drop = () => {
+      boxes.current = new WeakMap()
+    }
+    window.addEventListener('resize', drop)
+    return () => window.removeEventListener('resize', drop)
+  }, [])
 
   return (
     <div className="view-enter">

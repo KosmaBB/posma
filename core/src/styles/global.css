@@ -281,7 +281,24 @@ button { font-family: inherit; }
   overflow-x: hidden;
 }
 .content > *:not(.content-wash) { position: relative; z-index: 1; }
-.content-wash { position: absolute; pointer-events: none; filter: blur(80px); opacity: 0.14; border-radius: 50%; width: 46vw; height: 46vw; top: -18%; right: -10%; background: radial-gradient(circle, var(--g-violet-1), transparent 70%); z-index: 0; }
+/* Poświata tła.
+   Miała rozmycie 80 px na kwadracie 46vw — na szerokim ekranie ponad
+   1200 px boku, przeliczane przy każdym przewinięciu, bo element siedzi w
+   kontenerze przewijania. Gradient promienisty jest miękki sam z siebie, a
+   przy przezroczystości 0.14 rozmycie nie dokładało niczego widocznego.
+   `position: fixed` wyjmuje go ze strumienia przewijania, więc nie ma
+   powodu przerysowywać go razem z treścią. */
+.content-wash {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0.16;
+  width: 46vw;
+  height: 46vw;
+  top: -18%;
+  right: -10%;
+  background: radial-gradient(circle closest-side, var(--g-violet-1), transparent 78%);
+  z-index: 0;
+}
 
 /* ---------- dashboard ---------- */
 .vitals-row {
@@ -857,7 +874,6 @@ button { font-family: inherit; }
      niebieskie pasy na opisie i wygląda jak usterka. */
   user-select: none;
   -webkit-user-select: none;
-  will-change: transform, box-shadow;
   transform: translateY(0) scale(1);
   box-shadow:
     0 1px 0 var(--lift-inset) inset,
@@ -868,6 +884,13 @@ button { font-family: inherit; }
     box-shadow 0.42s cubic-bezier(0.33, 1, 0.68, 1),
     border-color 0.25s ease,
     opacity 0.25s ease;
+}
+
+.folder-card:hover,
+.folder-card[data-dragging='true'] {
+  /* Zapowiedź ruchu dopiero tutaj: ustawiona na stałe trzymała każdą kartę
+     na osobnej warstwie kompozytora przez cały czas życia widoku. */
+  will-change: transform, box-shadow;
 }
 
 .folder-card:hover {

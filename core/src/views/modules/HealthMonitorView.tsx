@@ -158,6 +158,10 @@ function Sparkline({
   hover: number | null
   onHover: (index: number | null) => void
 }) {
+  // Above the early return: a hook after one is only reached once there is
+  // data, and React counts hooks per render — the second sample would have
+  // thrown "rendered more hooks than during the previous render".
+  const pickFrame = useRef(0)
   const w = 220
   const h = 44
   if (values.length < 2) {
@@ -171,19 +175,27 @@ function Sparkline({
 
   // Index nearest the pointer, in the graph's own coordinates rather than
   // the element's, so it stays right whatever the interface is scaled to.
+  // Reading the element's box settles layout on the spot, so once per
+  // frame rather than once per pointer event.
   function pick(e: React.MouseEvent<SVGSVGElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * w
-    let best = 0
-    let bestDist = Infinity
-    for (let i = 0; i < values.length; i++) {
-      const d = Math.abs(xOf(i) - x)
-      if (d < bestDist) {
-        bestDist = d
-        best = i
+    const el = e.currentTarget
+    const clientX = e.clientX
+    if (pickFrame.current) return
+    pickFrame.current = requestAnimationFrame(() => {
+      pickFrame.current = 0
+      const rect = el.getBoundingClientRect()
+      const x = ((clientX - rect.left) / rect.width) * w
+      let best = 0
+      let bestDist = Infinity
+      for (let i = 0; i < values.length; i++) {
+        const d = Math.abs(xOf(i) - x)
+        if (d < bestDist) {
+          bestDist = d
+          best = i
+        }
       }
-    }
-    onHover(best)
+      onHover(best)
+    })
   }
 
   return (
