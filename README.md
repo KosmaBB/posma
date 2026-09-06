@@ -110,7 +110,7 @@ have been exercised on real hardware.
 
 | Module | What it does | Status |
 |---|---|---|
-| **Xcode cache** | Clears DerivedData, which quietly grows to tens of gigabytes on any Mac used for development | 📋 |
+| **Xcode cache** | Lists what Xcode left behind — build products, device symbols, simulator caches — marking what rebuilds itself and what cannot be recovered | 🧪 |
 | **Mail and Messages slimming** | Removes cached attachments without touching the messages themselves | 📋 |
 | **Time Machine snapshots** | Deletes local snapshots that consume disk between real backups | 📋 |
 

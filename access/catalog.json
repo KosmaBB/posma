@@ -136,6 +136,9 @@
     ],
     "vault": [
       "secrets"
+    ],
+    "xcode-cache": [
+      "fs-user"
     ]
   },
   "operations": {

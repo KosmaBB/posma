@@ -1,0 +1,9 @@
+{
+  "id": "xcode-cache",
+  "name": "Cache Xcode",
+  "description": "Lists what Xcode has left behind — build products, device symbols, simulator caches — and deletes only what is handed back after confirmation. Writes nothing outside ~/Library/Developer and ~/Library/Caches.",
+  "version": "0.1.0",
+  "platforms": ["macos"],
+  "binary": "xcode-cache",
+  "capabilities": ["fs-user"]
+}

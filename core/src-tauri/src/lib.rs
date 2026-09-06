@@ -205,6 +205,18 @@ async fn get_access_level(state: tauri::State<'_, PermissionRegistry>) -> Result
     Ok(state.access_level().await)
 }
 
+/// Xcode's leftovers. No capability: every location is inside the user's
+/// own Library, and the module refuses anything outside the list it knows.
+#[tauri::command]
+async fn scan_xcode_cache(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
+    call_sidecar(&app, "xcode-cache", serde_json::json!({ "cmd": "scan" })).await
+}
+
+#[tauri::command]
+async fn clean_xcode_cache(app: tauri::AppHandle, paths: Vec<String>) -> Result<serde_json::Value, String> {
+    call_sidecar(&app, "xcode-cache", serde_json::json!({ "cmd": "clean", "paths": paths })).await
+}
+
 #[tauri::command]
 async fn scan_desktop_theme(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
     call_sidecar(&app, "desktop-theme", serde_json::json!({ "cmd": "scan" })).await
@@ -608,6 +620,8 @@ pub fn run() {
             clean_big_files,
             set_access_level,
             get_access_level,
+            scan_xcode_cache,
+            clean_xcode_cache,
             scan_desktop_theme,
             apply_desktop_theme,
             install_desktop_theme,

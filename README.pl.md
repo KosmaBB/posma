@@ -106,7 +106,7 @@ zbudowane i zweryfikowane na Linuksie; na macOS-ie i Windowsie mają status
 
 | Moduł | Co robi | Status |
 |---|---|---|
-| **Cache Xcode** | Czyści DerivedData, które na każdym Macu używanym do programowania po cichu rośnie do dziesiątek gigabajtów | 📋 |
+| **Cache Xcode** | Wylicza, co Xcode zostawił — wyniki kompilacji, symbole urządzeń, cache symulatorów — z zaznaczeniem, co odbuduje się samo, a czego nie da się odzyskać | 🧪 |
 | **Odchudzanie Mail i Messages** | Usuwa zapisane w cache załączniki, nie ruszając samych wiadomości | 📋 |
 | **Migawki Time Machine** | Kasuje lokalne migawki zajmujące dysk pomiędzy właściwymi kopiami zapasowymi | 📋 |
 

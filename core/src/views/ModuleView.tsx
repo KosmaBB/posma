@@ -17,6 +17,7 @@ import { PkgCacheView } from './modules/PkgCacheView'
 import { KernelMgrView } from './modules/KernelMgrView'
 import { GrubEditorView } from './modules/GrubEditorView'
 import { DesktopThemeView } from './modules/DesktopThemeView'
+import { XcodeCacheView } from './modules/XcodeCacheView'
 
 /**
  * Modules with a real UI — everything else falls back to the placeholder.
@@ -42,6 +43,7 @@ const MODULE_VIEWS: Record<string, React.ComponentType<{ app: AppState }>> = {
   'kernel-mgr': KernelMgrView,
   'grub-editor': GrubEditorView,
   'desktop-theme': DesktopThemeView,
+  'xcode-cache': XcodeCacheView,
 }
 
 /** Generic placeholder page for an installed module — real module UIs replace this per-module. */
