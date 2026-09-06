@@ -71,24 +71,36 @@ function diskGradient(pct: number): string {
 }
 
 /**
- * Recent history as bars. Drawn from the same polling the cards use, so it
- * costs nothing extra — the numbers were already arriving and were being
- * thrown away every two seconds.
+ * Recent history as a single path.
+ *
+ * This drew one element per sample — sixty of them per metric, rebuilt with
+ * a fresh inline style on every poll. One polyline says the same thing and
+ * leaves the browser one node to reconcile instead of sixty.
  */
-function Spark({ values, from, to }: { values: number[]; from: string; to: string }) {
-  if (values.length < 2) return <div className="spark" aria-hidden="true" />
+function Spark({ values, colour }: { values: number[]; colour: string }) {
+  if (values.length < 2) return <svg className="spark" aria-hidden="true" viewBox="0 0 100 30" preserveAspectRatio="none" />
+
+  const step = 100 / (HISTORY - 1)
+  const points = values
+    .map((v, i) => {
+      const x = 100 - (values.length - 1 - i) * step
+      const y = 30 - Math.min(Math.max(v, 0), 100) / 100 * 28 - 1
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    })
+    .join(' ')
+
   return (
-    <div className="spark" aria-hidden="true">
-      {values.map((v, i) => (
-        <i
-          key={i}
-          style={{
-            height: `${Math.max(2, Math.min(100, v))}%`,
-            background: `linear-gradient(180deg, ${from}, ${to})`,
-          }}
-        />
-      ))}
-    </div>
+    <svg className="spark" aria-hidden="true" viewBox="0 0 100 30" preserveAspectRatio="none">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={colour}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   )
 }
 
@@ -198,7 +210,7 @@ export function Dashboard({ app, settings }: { app: AppState; settings: Settings
               {/* Treatment follows the kind, so a metric the sidecar starts
                   reporting tomorrow renders correctly without a change here. */}
               {m.kind === 'load' && (
-                <Spark values={history.current[m.id] ?? []} from={sparkColour(m.id)} to="transparent" />
+                <Spark values={history.current[m.id] ?? []} colour={sparkColour(m.id)} />
               )}
               {m.kind !== 'load' && m.percent !== undefined && (
                 <div className="vital-track">

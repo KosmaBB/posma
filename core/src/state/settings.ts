@@ -7,10 +7,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 export type UiScale = 'auto' | '0.9' | '1' | '1.15' | '1.3' | '1.5'
+export type Theme = 'dark' | 'light' | 'system'
+/** Named so the choice survives a palette change; the values live in CSS. */
+export type Accent = 'teal' | 'blue' | 'violet' | 'amber' | 'green'
 export type Reminders = 'off' | 'normal' | 'aggressive'
 export type Language = 'pl' | 'en'
 
 export interface Settings {
+  theme: Theme
+  accent: Accent
   /** Interface zoom. 'auto' derives one from the window width. */
   uiScale: UiScale
   reminders: Reminders
@@ -28,6 +33,8 @@ export interface Settings {
 const KEY = 'posma.settings.v1'
 
 export const DEFAULTS: Settings = {
+  theme: 'dark',
+  accent: 'teal',
   uiScale: 'auto',
   reminders: 'normal',
   language: 'pl',
@@ -92,6 +99,28 @@ export function useSettings() {
     window.addEventListener('resize', apply)
     return () => window.removeEventListener('resize', apply)
   }, [settings.uiScale])
+
+  // Theme and accent are attributes on the root element, so the whole
+  // stylesheet follows from two tokens rather than a second set of rules.
+  useEffect(() => {
+    const root = document.documentElement
+    const apply = () => {
+      const dark =
+        settings.theme === 'dark' ||
+        (settings.theme === 'system' &&
+          !window.matchMedia('(prefers-color-scheme: light)').matches)
+      root.dataset.theme = dark ? 'dark' : 'light'
+    }
+    apply()
+    if (settings.theme !== 'system') return
+    const media = window.matchMedia('(prefers-color-scheme: light)')
+    media.addEventListener('change', apply)
+    return () => media.removeEventListener('change', apply)
+  }, [settings.theme])
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = settings.accent
+  }, [settings.accent])
 
   const set = useCallback(<K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }))

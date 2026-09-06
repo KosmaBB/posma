@@ -91,6 +91,24 @@ interface Sample {
  * far more work, which is the trade this avoids — the data rate is
  * unchanged, only the drawing is continuous.
  */
+/**
+ * A number that eases toward its target, isolated in its own component.
+ *
+ * The hook updates state on every animation frame. Called from the view it
+ * re-rendered the whole thing sixty times a second — the process list, the
+ * sixteen cores, the drive table — to move one figure. Here only the figure
+ * re-renders.
+ */
+function SmoothValue({ target, suffix }: { target: number; suffix: string }) {
+  const value = useSmoothed(target)
+  return (
+    <>
+      {value.toFixed(0)}
+      {suffix}
+    </>
+  )
+}
+
 function useSmoothed(target: number, rate = 0.18): number {
   const [value, setValue] = useState(target)
   const current = useRef(target)
@@ -217,7 +235,7 @@ function StatTile({
   frozen,
 }: {
   label: string
-  value: string
+  value: React.ReactNode
   sub?: string
   history: number[]
   max: number
@@ -264,8 +282,6 @@ export function HealthMonitorView({ app }: { app: AppState }) {
   hoverRef.current = hover
 
   const latest = samples.length > 0 ? samples[samples.length - 1] : undefined
-  const smoothCpu = useSmoothed(latest?.cpu ?? 0)
-  const smoothRam = useSmoothed(latest?.ram ?? 0)
 
   async function poll() {
     try {
@@ -351,7 +367,7 @@ export function HealthMonitorView({ app }: { app: AppState }) {
       <div className="hm-grid">
         <StatTile
           label="Procesor"
-          value={`${smoothCpu.toFixed(0)}%`}
+          value={<SmoothValue target={latest?.cpu ?? 0} suffix="%" />}
           history={cpuHistory}
           max={100}
           color="var(--accent)"
@@ -361,7 +377,7 @@ export function HealthMonitorView({ app }: { app: AppState }) {
         />
         <StatTile
           label="Pamięć RAM"
-          value={`${smoothRam.toFixed(0)}%`}
+          value={<SmoothValue target={latest?.ram ?? 0} suffix="%" />}
           sub={`${formatBytes(snap.ram_used_bytes)} / ${formatBytes(snap.ram_total_bytes)}`}
           history={ramHistory}
           max={100}

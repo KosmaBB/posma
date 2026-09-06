@@ -299,6 +299,19 @@ async fn scan_disk_map(app: tauri::AppHandle, path: Option<String>, blacklist: V
     call_sidecar(&app, "disk-map", serde_json::json!({ "cmd": "scan", "path": path, "blacklist": blacklist })).await
 }
 
+/// Deletes one entry the disk map is showing. Not gated by a capability:
+/// the module refuses anything the shared exclusion list covers, so what
+/// remains is the user's own files, which they can already delete with a
+/// file manager.
+#[tauri::command]
+async fn delete_disk_map_entry(
+    app: tauri::AppHandle,
+    path: String,
+    blacklist: Vec<String>,
+) -> Result<serde_json::Value, String> {
+    call_sidecar(&app, "disk-map", serde_json::json!({ "cmd": "delete", "path": path, "blacklist": blacklist })).await
+}
+
 #[tauri::command]
 async fn scan_browser_hygiene(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
     call_sidecar(&app, "browser-hygiene", serde_json::json!({ "cmd": "scan" })).await
@@ -611,6 +624,7 @@ pub fn run() {
             inspect_metadata,
             clean_metadata,
             scan_disk_map,
+            delete_disk_map_entry,
             scan_browser_hygiene,
             clean_browser_hygiene,
             health_snapshot,

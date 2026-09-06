@@ -25,7 +25,46 @@
   --g-green-1: #34ff8a; --g-green-2: #2dd4bf;
   --g-indigo-1: #7c3dff; --g-indigo-2: #3d6aff;
   --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 44px -20px rgba(0, 0, 0, 0.65);
+  --lift-inset: rgba(255, 255, 255, 0.04);
+  --lift-near: rgba(0, 0, 0, 0.55);
+  --lift-far: rgba(0, 0, 0, 0.7);
   color-scheme: dark;
+}
+
+/* ---------- motyw jasny ----------
+   Wyłącznie podmiana tokenów: reszta arkusza czyta zmienne, więc nie ma tu
+   drugiego zestawu reguł do utrzymania. Akcenty są ciemniejsze niż w
+   wersji nocnej — ta sama mięta na bieli ma za mały kontrast, żeby dało
+   się na niej czytać. */
+:root[data-theme='light'] {
+  --bg: #f4f6f5;
+  --bg-2: #ffffff;
+  --bg-3: #eaeeec;
+  --ink: #101614;
+  --muted: #5b6764;
+  --accent: #0a7d6a;
+  --accent-ink: #ffffff;
+  --border: rgba(16, 22, 20, 0.12);
+  --border-strong: rgba(16, 22, 20, 0.26);
+  --good: #14875a;
+  --warn: #a76a08;
+  --critical: #cc3333;
+
+  /* Gradienty przyciemnione — te same, co w nocy, na bieli świecą i gubią
+     czytelność tekstu, który na nich leży. */
+  --g-teal-1: #10b89c; --g-teal-2: #2f6fd8;
+  --g-violet-1: #8b2fd8; --g-violet-2: #d62f85;
+  --g-blue-1: #2f56d8; --g-blue-2: #0f9fd0;
+  --g-amber-1: #d86f1f; --g-amber-2: #c79a12;
+  --g-red-1: #d62f4a; --g-red-2: #d86f1f;
+  --g-green-1: #16a35c; --g-green-2: #1aa08f;
+  --g-indigo-1: #6229d8; --g-indigo-2: #2f56d8;
+
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 10px 26px -18px rgba(16, 22, 20, 0.35);
+  --lift-inset: rgba(255, 255, 255, 0.9);
+  --lift-near: rgba(16, 22, 20, 0.14);
+  --lift-far: rgba(16, 22, 20, 0.22);
+  color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -821,9 +860,9 @@ button { font-family: inherit; }
   will-change: transform, box-shadow;
   transform: translateY(0) scale(1);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 1px 2px rgba(0, 0, 0, 0.55),
-    0 6px 14px -8px rgba(0, 0, 0, 0.5);
+    0 1px 0 var(--lift-inset) inset,
+    0 1px 2px var(--lift-near),
+    0 6px 14px -8px var(--lift-near);
   transition:
     transform 0.42s cubic-bezier(0.34, 1.4, 0.5, 1),
     box-shadow 0.42s cubic-bezier(0.33, 1, 0.68, 1),
@@ -835,9 +874,9 @@ button { font-family: inherit; }
   transform: translateY(-10px) scale(1.018);
   border-color: var(--border-strong);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.09) inset,
-    0 0 0 rgba(0, 0, 0, 0),
-    0 26px 44px -14px rgba(0, 0, 0, 0.7);
+    0 1px 0 var(--lift-inset) inset,
+    0 0 0 transparent,
+    0 26px 44px -14px var(--lift-far);
   z-index: 2;
 }
 
@@ -852,7 +891,7 @@ button { font-family: inherit; }
    maksymalnym rozproszeniu. Bez przejścia — ma nadążać za kursorem. */
 .folder-card[data-dragging='true'] {
   transform: translateY(-14px) scale(1.03) rotate(-1.6deg);
-  box-shadow: 0 34px 56px -18px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 34px 56px -18px var(--lift-far);
   opacity: 0.92;
   z-index: 3;
   transition: none;
@@ -930,8 +969,7 @@ button { font-family: inherit; }
 .folder-card__foot { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
 
 /* ---------- sparkline ---------- */
-.spark { display: flex; align-items: flex-end; gap: 1px; height: 26px; margin-top: auto; }
-.spark i { flex: 1; min-width: 1px; border-radius: 1px 1px 0 0; transition: height 0.3s ease; }
+.spark { display: block; width: 100%; height: 26px; margin-top: auto; }
 .vital-spacer { height: 26px; margin-top: auto; }
 
 /* ---------- kafelki w trakcie ładowania ---------- */
@@ -1070,3 +1108,65 @@ button { font-family: inherit; }
 .hm-sensor-value span { font-size: 11px; margin-left: 2px; color: var(--muted); }
 .hm-sensor-sub { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-sensor .vital-track { margin-top: auto; }
+
+/* ---------- menu kontekstowe ---------- */
+.ctx-menu {
+  position: fixed; z-index: 400; min-width: 210px;
+  background: var(--bg-2); border: 1px solid var(--border-strong);
+  border-radius: 10px; box-shadow: var(--shadow); overflow: hidden;
+  padding: 4px;
+}
+
+.ctx-menu__path {
+  font-size: 10.5px; color: var(--muted); padding: 6px 10px 8px;
+  border-bottom: 1px solid var(--border); margin-bottom: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.ctx-menu__item {
+  display: block; width: 100%; text-align: left; cursor: pointer;
+  background: none; border: 0; border-radius: 7px;
+  padding: 8px 10px; font-size: 12.5px; color: var(--ink);
+  transition: background-color 0.15s ease;
+}
+
+.ctx-menu__item:hover { background: var(--bg-3); }
+.ctx-menu__item--danger { color: var(--critical); }
+.ctx-menu__item--danger:hover { background: color-mix(in srgb, var(--critical) 15%, transparent); }
+
+.diskmap-result {
+  padding: 10px 14px; margin-top: 10px; font-size: 12.5px;
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ---------- wybór akcentu ----------
+   Przestawia jeden token; wszystko, co go czyta — przyciski, podświetlenia,
+   obramowania skupienia — idzie za nim bez własnych reguł. */
+:root[data-accent='blue']   { --accent: #3d8bff; --accent-ink: #041428; }
+:root[data-accent='violet'] { --accent: #a83dff; --accent-ink: #1a0428; }
+:root[data-accent='amber']  { --accent: #ffb454; --accent-ink: #2a1a04; }
+:root[data-accent='green']  { --accent: #34ff8a; --accent-ink: #04240f; }
+
+:root[data-theme='light'][data-accent='blue']   { --accent: #2f6fd8; --accent-ink: #ffffff; }
+:root[data-theme='light'][data-accent='violet'] { --accent: #8b2fd8; --accent-ink: #ffffff; }
+:root[data-theme='light'][data-accent='amber']  { --accent: #9a6207; --accent-ink: #ffffff; }
+:root[data-theme='light'][data-accent='green']  { --accent: #14875a; --accent-ink: #ffffff; }
+
+/* ---------- wybór koloru akcentu ---------- */
+.accent-picker { display: flex; gap: 8px; }
+
+.accent-dot {
+  width: 22px; height: 22px; border-radius: 50%; cursor: pointer;
+  border: 2px solid transparent; padding: 0;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.accent-dot:hover { transform: scale(1.12); }
+.accent-dot[data-active='true'] { border-color: var(--ink); }
+.accent-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+.accent-dot[data-accent='teal']   { background: #33e6c8; }
+.accent-dot[data-accent='blue']   { background: #3d8bff; }
+.accent-dot[data-accent='violet'] { background: #a83dff; }
+.accent-dot[data-accent='amber']  { background: #ffb454; }
+.accent-dot[data-accent='green']  { background: #34ff8a; }

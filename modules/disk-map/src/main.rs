@@ -32,6 +32,11 @@ enum Request {
         #[serde(default)]
         blacklist: Vec<String>,
     },
+    Delete {
+        path: String,
+        #[serde(default)]
+        blacklist: Vec<String>,
+    },
 }
 
 #[derive(Serialize)]
@@ -95,6 +100,71 @@ fn dir_size(path: &Path, filter: &Filter) -> u64 {
     total
 }
 
+#[derive(Serialize)]
+struct DeleteResult {
+    success: bool,
+    message: String,
+    /// Freed space, so the caller can say what was gained rather than only
+    /// that something happened.
+    freed_bytes: u64,
+}
+
+/// Removes one entry the disk map is showing.
+///
+/// The map can browse anywhere, which makes this the most dangerous delete
+/// in the application — the other scanners only ever offer files from
+/// directories they chose themselves. Three things are checked here, and
+/// the checks are done against the resolved path rather than the string
+/// that arrived, so a symlink cannot be used to point somewhere else:
+///
+/// 1. the shared exclusion list must allow it, which rules out the running
+///    system and another operating system's volume;
+/// 2. it must not be a filesystem root — no useful request ever is;
+/// 3. it must still exist, so a stale view cannot delete the wrong thing
+///    after the tree changed underneath it.
+fn delete(path: String, blacklist: Vec<String>) -> DeleteResult {
+    let refuse = |m: String| DeleteResult { success: false, message: m, freed_bytes: 0 };
+
+    let raw = PathBuf::from(&path);
+    let Ok(resolved) = raw.canonicalize() else {
+        return refuse(format!("{path}: nie istnieje"));
+    };
+
+    if resolved.parent().is_none() {
+        return refuse("Odmowa: to katalog główny".into());
+    }
+
+    let filter = Filter::including_noise(blacklist);
+    if !filter.allows(&resolved) {
+        return refuse(format!(
+            "Odmowa: {} jest na liście wykluczeń — pliki systemowe, dysk innego systemu albo Twoja czarna lista",
+            resolved.display()
+        ));
+    }
+
+    let Ok(meta) = fs::symlink_metadata(&resolved) else {
+        return refuse(format!("{}: nie udało się odczytać", resolved.display()));
+    };
+
+    // Measured before removal; afterwards there is nothing left to measure.
+    let freed = if meta.is_dir() { dir_size(&resolved, &filter) } else { meta.len() };
+
+    let outcome = if meta.is_dir() {
+        fs::remove_dir_all(&resolved)
+    } else {
+        fs::remove_file(&resolved)
+    };
+
+    match outcome {
+        Ok(()) => DeleteResult {
+            success: true,
+            message: format!("Usunięto {}", resolved.display()),
+            freed_bytes: freed,
+        },
+        Err(e) => refuse(format!("{}: {e}", resolved.display())),
+    }
+}
+
 fn scan(path: Option<String>, blacklist: Vec<String>) -> ScanData {
     let root = path.map(PathBuf::from).unwrap_or_else(home_dir);
     // A map counts generated content: it occupies the space, and hiding it
@@ -151,6 +221,7 @@ fn main() {
         }),
         Ok(_) => match serde_json::from_str::<Request>(line.trim()) {
             Ok(Request::Scan { path, blacklist }) => serde_json::to_string(&ok(scan(path, blacklist))),
+            Ok(Request::Delete { path, blacklist }) => serde_json::to_string(&ok(delete(path, blacklist))),
             Err(e) => serde_json::to_string(&Response::<()>::Err {
                 ok: false,
                 error: format!("invalid request: {e}"),

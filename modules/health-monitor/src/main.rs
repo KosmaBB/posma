@@ -104,7 +104,10 @@ fn ok<T: Serialize>(data: T) -> Response<T> {
 }
 
 fn snapshot() -> Snapshot {
-    let mut sys = System::new_all();
+    // `new_all` would also collect networks, users and components this
+    // module never reads — about 225 ms of work per snapshot. Each source
+    // below is refreshed explicitly instead.
+    let mut sys = System::new();
     sys.refresh_cpu_usage();
     std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
     sys.refresh_cpu_usage();

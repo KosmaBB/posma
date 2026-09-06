@@ -85,8 +85,13 @@ fn disk_details(device_name: &str) -> (Option<String>, Option<bool>) {
 }
 
 fn collect() -> SystemInfo {
-    let mut sys = System::new_all();
+    // Deliberately not `new_all`: that collects processes, networks and
+    // users as well, costs about 225 ms, and this module reads none of it.
+    // Asking for the two things it does need costs about two.
+    let mut sys = System::new();
     sys.refresh_cpu_usage();
+    // sysinfo needs two samples to report a rate; the wait between them is
+    // idle, not work.
     std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
     sys.refresh_cpu_usage();
     sys.refresh_memory();

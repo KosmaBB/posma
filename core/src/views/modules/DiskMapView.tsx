@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { revealItemInDir } from '@tauri-apps/plugin-opener'
 import type { AppState } from '../../state/appState'
 import { currentBlacklist } from '../../state/settings'
 import { Preparing } from '../../components/Preparing'
@@ -66,6 +67,63 @@ export function DiskMapView({ app }: { app: AppState }) {
   // A module can hand us a starting volume — the health monitor does, when
   // a disk in its list is clicked.
   const requested = app.view.kind === 'module' ? app.view.param : undefined
+
+  /** Position and target of the right-click menu; null when closed. */
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string; name: string } | null>(null)
+  const [actionResult, setActionResult] = useState<string | null>(null)
+
+  // Any click elsewhere, or a scroll, dismisses it — a menu pinned to a
+  // position is wrong the moment the list moves under it.
+  useEffect(() => {
+    if (!menu) return
+    const close = () => setMenu(null)
+    window.addEventListener('click', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [menu])
+
+  async function revealInFileManager(path: string) {
+    setActionResult(null)
+    try {
+      await revealItemInDir(path)
+    } catch (e) {
+      setActionResult(String(e))
+    }
+  }
+
+  async function deleteEntry(path: string, name: string) {
+    if (
+      !window.confirm(
+        `Usunąć „${name}" bezpowrotnie?\n\n${path}\n\nTo nie trafia do kosza — folderu nie da się odzyskać.`,
+      )
+    ) {
+      return
+    }
+    setActionResult(null)
+    try {
+      const res = await invoke<ApiResponse<{ success: boolean; message: string; freed_bytes: number }>>(
+        'delete_disk_map_entry',
+        { path, blacklist: currentBlacklist() },
+      )
+      if (res.ok) {
+        setActionResult(
+          res.data.success
+            ? `${res.data.message} — zwolniono ${formatBytes(res.data.freed_bytes)}`
+            : res.data.message,
+        )
+        if (res.data.success && data) goTo(data.path)
+      } else {
+        setActionResult(res.error)
+      }
+    } catch (e) {
+      setActionResult(String(e))
+    }
+  }
 
   useEffect(() => {
     goTo(requested)
@@ -265,6 +323,36 @@ export function DiskMapView({ app }: { app: AppState }) {
             </div>
           )}
         </>
+      )}
+    {actionResult && <div className="glass diskmap-result">{actionResult}</div>}
+
+      {menu && (
+        <div
+          className="ctx-menu"
+          style={{ left: menu.x, top: menu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="ctx-menu__path mono">{menu.name}</div>
+          <button
+            className="ctx-menu__item"
+            onClick={() => {
+              revealInFileManager(menu.path)
+              setMenu(null)
+            }}
+          >
+            Pokaż w menedżerze plików
+          </button>
+          <button
+            className="ctx-menu__item ctx-menu__item--danger"
+            onClick={() => {
+              const { path, name } = menu
+              setMenu(null)
+              deleteEntry(path, name)
+            }}
+          >
+            Usuń bezpowrotnie
+          </button>
+        </div>
       )}
     </div>
   )

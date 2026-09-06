@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import type { AppState } from '../state/appState'
-import { autoScale, type SettingsState, type UiScale } from '../state/settings'
+import { autoScale, type Accent, type SettingsState, type Theme, type UiScale } from '../state/settings'
 
 /** A label and its explanation, with whatever control it takes on the right. */
 function Row({
@@ -86,6 +86,37 @@ export function Settings({ app, settings }: { app: AppState; settings: SettingsS
           </select>
         </Row>
         {accessError && <div className="form-warning">{accessError}</div>}
+
+        <Row
+          name="Motyw"
+          desc="Systemowy idzie za ustawieniem systemu i zmienia się razem z nim."
+        >
+          <select value={s.theme} onChange={(e) => set('theme', e.target.value as Theme)}>
+            <option value="dark">Ciemny</option>
+            <option value="light">Jasny</option>
+            <option value="system">Systemowy</option>
+          </select>
+        </Row>
+
+        <Row
+          name="Kolor akcentu"
+          desc="Kolor przycisków, podświetleń i obramowania zaznaczenia."
+        >
+          <div className="accent-picker">
+            {(['teal', 'blue', 'violet', 'amber', 'green'] as Accent[]).map((a) => (
+              <button
+                key={a}
+                type="button"
+                className="accent-dot"
+                data-accent={a}
+                data-active={s.accent === a}
+                aria-label={a}
+                aria-pressed={s.accent === a}
+                onClick={() => set('accent', a)}
+              />
+            ))}
+          </div>
+        </Row>
 
         <Row
           name="Skalowanie interfejsu"
