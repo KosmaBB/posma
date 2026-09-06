@@ -94,26 +94,38 @@ built_path() {
     fi
 }
 
-built=0
+# Which modules to build, decided before anything is compiled.
+wanted=()
 skipped=0
 for module_dir in "$repo_root"/modules/*/; do
     module_name="$(basename "$module_dir")"
-
-    if ! belongs_here "${module_dir%/}" "$module_name"; then
+    if belongs_here "${module_dir%/}" "$module_name"; then
+        wanted+=("$module_name")
+    else
         echo "Skipping (not for $host_os): $module_name"
         skipped=$((skipped + 1))
-        continue
     fi
+done
 
+# One cargo invocation for the lot. Eighteen separate ones spent about four
+# seconds re-resolving the same dependency graph even with nothing to do,
+# which is most of what a no-op sync used to cost.
+package_flags=()
+for m in "${wanted[@]}"; do package_flags+=(-p "$m"); done
+
+for target in "${targets[@]}"; do
+    target_flag=""
+    if [ "$target" != "$host_triple" ] || [ "$universal" = "yes" ]; then
+        target_flag="--target $target"
+    fi
+    echo "Building ${#wanted[@]} modules ($profile, $target)"
+    cargo build "${package_flags[@]}" $cargo_build_flag $target_flag \
+        --manifest-path "$repo_root/Cargo.toml"
+done
+
+built=0
+for module_name in "${wanted[@]}"; do
     for target in "${targets[@]}"; do
-        echo "Building module: $module_name ($profile, $target)"
-        target_flag=""
-        if [ "$target" != "$host_triple" ] || [ "$universal" = "yes" ]; then
-            target_flag="--target $target"
-        fi
-        cargo build -p "$module_name" $cargo_build_flag $target_flag \
-            --manifest-path "$repo_root/Cargo.toml"
-
         src_bin="$(built_path "$target" "$module_name")"
         dest_bin="$binaries_dir/$module_name-$target"
         if [ -f "$src_bin.exe" ]; then
@@ -122,7 +134,6 @@ for module_dir in "$repo_root"/modules/*/; do
             cp "$src_bin" "$dest_bin"
             chmod +x "$dest_bin"
         fi
-        echo "  -> $dest_bin"
     done
 
     # One binary carrying both architectures. Tauri looks for this name when

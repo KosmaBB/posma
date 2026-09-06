@@ -4,9 +4,9 @@
   "version": "0.2.1",
   "identifier": "com.posma.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run dev:app",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:app",
     "frontendDist": "../dist"
   },
   "app": {

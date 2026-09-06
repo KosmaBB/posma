@@ -13,12 +13,25 @@
 
 ```bash
 npm --prefix core install
-bash scripts/sync-sidecars.sh
 npm --prefix core run tauri dev
 ```
 
-**The order matters.** `sync-sidecars.sh` builds every crate under
-`modules/` and copies each binary to
+`tauri dev` now syncs the sidecars itself before starting, so a module
+edited without a re-sync can no longer reach a running app — that mismatch
+crashed the health monitor once, because the interface expected a field the
+stale binary did not send. A no-op sync costs about a second and a half.
+
+To sync without starting anything:
+
+```bash
+bash scripts/sync-sidecars.sh
+```
+
+On Windows this needs a bash — Git Bash or WSL — which is one of the things
+the Windows port has to settle.
+
+**Why the sync exists.** `sync-sidecars.sh` builds the modules meant for
+this system and copies each binary to
 `core/src-tauri/binaries/<module>-<target-triple>` — the naming Tauri's
 sidecar resolution requires. Those binaries are deliberately not committed,
 so on a fresh clone they don't exist yet, and Tauri refuses to build:

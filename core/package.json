@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "sidecars": "bash ../scripts/sync-sidecars.sh",
+    "sidecars:release": "bash ../scripts/sync-sidecars.sh release",
+    "dev:app": "npm run sidecars && npm run dev",
+    "build:app": "npm run sidecars:release && npm run build"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.2.10",

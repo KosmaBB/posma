@@ -36,7 +36,9 @@ interface Metric {
 }
 
 interface Snapshot {
-  metrics: Metric[]
+  /** Optional: a sidecar older than this interface does not send it, and a
+   *  machine with no sensors sends an empty list. Neither is a failure. */
+  metrics?: Metric[]
   cpu_percent: number
   cores: number[]
   ram_used_bytes: number
@@ -326,6 +328,9 @@ export function HealthMonitorView({ app }: { app: AppState }) {
 
   const maxCoreUsage = 100
 
+  // Defaulted rather than asserted: reading .length off a field the sidecar
+  // did not send took the whole view down.
+  const sensors = snap.metrics ?? []
   const cpuHistory = samples.map((x) => x.cpu)
   const ramHistory = samples.map((x) => x.ram)
   const pointed = hover !== null ? samples[hover] : null
@@ -374,14 +379,14 @@ export function HealthMonitorView({ app }: { app: AppState }) {
         </div>
       </div>
 
-      {snap.metrics.length > 0 && (
+      {sensors.length > 0 && (
         <>
           <div className="section-head">
             <h2>Czujniki</h2>
-            <span className="count">{snap.metrics.length} odczytów</span>
+            <span className="count">{sensors.length} odczytów</span>
           </div>
           <div className="hm-sensors">
-            {snap.metrics.map((m) => (
+            {sensors.map((m) => (
               <div className="glass hm-sensor" key={m.id}>
                 <div className="hm-sensor-label">{m.label}</div>
                 <div className="hm-sensor-value mono">

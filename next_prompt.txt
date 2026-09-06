@@ -3,4 +3,4 @@ Dobra, aplikacja się odpaliła i wstępnie wygląda na to że ogólne moduły d
 2. (Ogólna bo o tym zapomniałem) - Ogarnijmy ustawienia żeby wszystko było na tip top zanim ruszymy dalej z pracami nad mac os
 3. (Mac os) - Przez niestandardowe rozdzielczości mac os musimy na nowo do nich ustawić + dorzucić jakieś predefiniowane opcje co do skalowania się wszystkiego (np mam rozdzielczość 2048x1280 i mniejszy tekst jest słabo czytleny + ukazł się pasek do przewijania na boki zgaduje że przez wcześniejsze prace co do skalowania ale zapomniałem o tym jakie są na mac os)
 4. (Ogólne) - monitor zdrowia potrzebuje paru udogodnień:
-- Ma liście dysków
+    - Na liście dysków 
